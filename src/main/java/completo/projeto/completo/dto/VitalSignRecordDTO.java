@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 
 public record VitalSignRecordDTO(
         String patientId,
+        String patientName,
+        String patientCpf,
         Integer heartRate,
         Integer oxygenSaturation,
         Integer systolicPressure,
@@ -11,5 +13,5 @@ public record VitalSignRecordDTO(
         Double temperature,
         Integer respiratoryRate,
         String status,
-        LocalDateTime timestamp
+        String timestamp
 ) {}

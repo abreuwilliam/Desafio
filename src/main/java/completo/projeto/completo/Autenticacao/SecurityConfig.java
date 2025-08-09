@@ -3,46 +3,55 @@ package completo.projeto.completo.Autenticacao;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // API stateless de teste: sem CSRF
                 .csrf(csrf -> csrf.disable())
+                // CORS amplo para facilitar testes de frontend local
+                .cors(Customizer.withDefaults())
+                // H2 console
                 .headers(h -> h.frameOptions(f -> f.disable()))
+                // Tudo liberado
                 .authorizeHttpRequests(auth -> auth
-                        // público geral
-                        .requestMatchers(
-                                "/auth/**",
-                                "/h2-console/**",
-                                "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
-                                "/swagger-resources/**", "/webjars/**"
-                        ).permitAll()
+                        .anyRequest().permitAll()
+                );
 
-                        // libera WebSocket e STOMP para teste
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/topic/**").permitAll()
-                        .requestMatchers("/app/**").permitAll()
-
-                        // libera estes GETs globais para teste
-                        .requestMatchers(HttpMethod.GET, "/api/v1/vital-signs/latest").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/vital-signs/history").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/vital-signs").permitAll()
-
-                        // o resto exige autenticação
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        // ⚠️ Intencionalmente NÃO adicionamos JwtAuthenticationFilter aqui durante os testes
+        // .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    // CORS padrão aberto (ajuste domínios quando for para prod)
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration cfg = new CorsConfiguration();
+        cfg.setAllowedOrigins(List.of("*"));
+        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        cfg.setAllowedHeaders(List.of("*"));
+        cfg.setAllowCredentials(false);
+        cfg.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
+        src.registerCorsConfiguration("/**", cfg);
+        return src;
     }
 
     @Bean
