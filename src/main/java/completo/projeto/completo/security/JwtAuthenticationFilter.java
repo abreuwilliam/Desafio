@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-@Profile("!test")
+
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -33,7 +33,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Libera pré-flight CORS sem exigir token
         if (HttpMethod.OPTIONS.matches(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;

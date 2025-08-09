@@ -3,6 +3,7 @@ package completo.projeto.completo.controller;
 
 import completo.projeto.completo.VitalSignRecordController;
 import completo.projeto.completo.dto.VitalSignRecordDTO;
+import completo.projeto.completo.security.JwtAuthenticationFilter;
 import completo.projeto.completo.service.VitalSignRecordService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,12 +24,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = VitalSignRecordController.class)
-@ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class VitalSignRecordControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private JwtAuthenticationFilter JwtAuthenticationFilter;
+
 
     @MockBean
     private VitalSignRecordService service;
