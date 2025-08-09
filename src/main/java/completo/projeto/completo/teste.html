@@ -24,7 +24,6 @@
         stompClient.connect({}, (frame) => {
             log('Conectado: ' + frame);
 
-            // Inscreve no tópico que você usa no back-end
             stompClient.subscribe('/topic/dashboard', (message) => {
                 log("Recebido: " + message.body);
             });

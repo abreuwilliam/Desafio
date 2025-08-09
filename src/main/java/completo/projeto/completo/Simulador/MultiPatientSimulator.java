@@ -31,23 +31,22 @@ public class MultiPatientSimulator {
             "dados_pac003.csv"
     };
 
-    // Endpoint dos sinais vitais
     private static final String VITALS_API_URL = "http://localhost:8080/api/v1/vital-signs";
 
-    // Sem auth por enquanto
     private static final String BEARER_TOKEN = null;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    // === Configs de ritmo/loop ===
-    private static final long INTERVAL_MS = 200;     // intervalo entre linhas (por arquivo) — requisito do desafio
-    private static final boolean LOOP_FOREVER = false;
+    // Intervalo entre envios em milissegundos
+    private static final long INTERVAL_MS = 200;
+
+    // Se true, roda para sempre, se false, roda apenas uma vez
+    private static final boolean LOOP_FOREVER = true;
+
     private static final long LOOP_PAUSE_MS = 1500;
 
-    // Enviar name/cpf só no 1º envio bem-sucedido de cada patientId
     private static final boolean SEND_NAME_CPF_ONLY_ON_FIRST = true;
 
-    // Pacientes já "semeados" (marcados somente após resposta 2xx)
     private static final Set<String> FIRST_SEEN_PATIENTS = ConcurrentHashMap.newKeySet();
 
     public static void main(String[] args) {
@@ -76,10 +75,10 @@ public class MultiPatientSimulator {
         }
 
         int count = 0;
-        long lastSendMs = 0; // pacing por arquivo
+        long lastSendMs = 0;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(f, StandardCharsets.UTF_8))) {
-            String header = reader.readLine(); // pula cabeçalho
+            String header = reader.readLine();
             System.out.println("[SIM] Cabeçalho: " + header);
 
             HttpClient client = HttpClient.newBuilder()
@@ -90,8 +89,6 @@ public class MultiPatientSimulator {
             while ((line = reader.readLine()) != null) {
                 count++;
                 try {
-                    // 0: timestamp | 1: paciente_id | 2: paciente_nome | 3: paciente_cpf
-                    // 4: hr | 5: spo2 | 6: pressao_sys | 7: pressao_dia | 8: temp | 9: resp_freq | 10: status
                     String[] fields = line.split(",", -1);
 
                     String patientId   = safeTrim(fields, 1);
@@ -103,7 +100,6 @@ public class MultiPatientSimulator {
                     String patientName = safeTrim(fields, 2);
                     String patientCpf  = safeTrim(fields, 3);
 
-                    // logs brutos (primeiras linhas) — ajudam a ver o que veio do CSV
                     if (count <= 3) {
                         System.out.printf("[SIM][%s] #%d RAW hr='%s' spo2='%s' pSys='%s' pDia='%s' temp='%s' rFr='%s'%n",
                                 f.getName(), count,
@@ -203,8 +199,6 @@ public class MultiPatientSimulator {
         }
     }
 
-    // ---------- Helpers ----------
-
     private static boolean isBlank(String s) {
         return s == null || s.isBlank();
     }
@@ -285,7 +279,6 @@ public class MultiPatientSimulator {
             return LocalDateTime.parse(s, isoT).toString();
         } catch (Exception ignore) {}
 
-        // ISO com espaço
         try {
             var isoSpace = new DateTimeFormatterBuilder()
                     .appendPattern("uuuu-MM-dd HH:mm:ss")

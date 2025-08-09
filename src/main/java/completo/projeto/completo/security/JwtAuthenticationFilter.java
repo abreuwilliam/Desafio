@@ -1,9 +1,10 @@
-package completo.projeto.completo.Autenticacao;
+package completo.projeto.completo.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
+@Profile("!test")
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
@@ -46,10 +48,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwtUtil.validateToken(jwt)) {
                 String username = jwtUtil.getUsernameFromToken(jwt);
 
-                // Tenta pegar roles do token, se você tiver implementado getRoles(token) no JwtUtil.
                 List<String> roles = null;
                 try {
-                    roles = jwtUtil.getRoles(jwt); // implemente no JwtUtil se ainda não tiver
+                    roles = jwtUtil.getRoles(jwt);
                 } catch (Exception ignored) {}
 
                 var authorities = (roles == null)
