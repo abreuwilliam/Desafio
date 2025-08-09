@@ -1,4 +1,4 @@
-package completo.projeto.completo.controller;
+package completo.projeto.completo;
 
 import completo.projeto.completo.dto.VitalSignRecordDTO;
 import completo.projeto.completo.service.VitalSignRecordService;

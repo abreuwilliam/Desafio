@@ -1,6 +1,7 @@
 package completo.projeto.completo.controller;
 
 
+import completo.projeto.completo.VitalSignRecordController;
 import completo.projeto.completo.dto.VitalSignRecordDTO;
 import completo.projeto.completo.service.VitalSignRecordService;
 import org.junit.jupiter.api.DisplayName;
@@ -36,13 +37,13 @@ class VitalSignRecordControllerTest {
         return new VitalSignRecordDTO(
                 "PAC001",
                 "João Silva",
-                null,           // LGPD: controller responde sem CPF
+                null,
                 87,             // HR
-                96,             // SpO2
-                130,            // SYS
-                85,             // DIA
+                96.0,             // SpO2
+                130.0,            // SYS
+                85.0,             // DIA
                 36.7,           // temp
-                18,             // resp
+                18.0,             // resp
                 "NORMAL",
                 "2025-08-09T12:00:00"
         );

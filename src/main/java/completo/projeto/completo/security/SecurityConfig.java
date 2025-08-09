@@ -23,24 +23,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // API stateless de teste: sem CSRF
+
                 .csrf(csrf -> csrf.disable())
-                // CORS amplo para facilitar testes de frontend local
+
                 .cors(Customizer.withDefaults())
-                // H2 console
+
                 .headers(h -> h.frameOptions(f -> f.disable()))
-                // Tudo liberado
+
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()
                 );
 
-        // ⚠️ Intencionalmente NÃO adicionamos JwtAuthenticationFilter aqui durante os testes
-        // .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // CORS padrão aberto (ajuste domínios quando for para prod)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();

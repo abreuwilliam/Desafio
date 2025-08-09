@@ -147,7 +147,7 @@ public class VitalSignRecordService {
         return lastOpt.map(VitalSignRecord::getPatientCpf).orElse(null);
     }
 
-    private LocalDateTime resolveTimestamp(String timestamp) {
+    protected LocalDateTime resolveTimestamp(String timestamp) {
         if (isBlank(timestamp)) return LocalDateTime.now();
         try {
             return LocalDateTime.parse(timestamp);
@@ -157,7 +157,7 @@ public class VitalSignRecordService {
         }
     }
 
-    private void validateFirstRecordRequireds(VitalSignRecord entity, boolean isFirstRecordForPatient) {
+    protected void validateFirstRecordRequireds(VitalSignRecord entity, boolean isFirstRecordForPatient) {
         if (!isFirstRecordForPatient) return;
         if (isBlank(entity.getPatientName())) {
             log.warn("domain=vital_sign validation=fail reason=missing_patientName patientId={}", entity.getPatientId());

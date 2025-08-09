@@ -29,11 +29,11 @@ public class VitalSignRecord {
     private String patientCpf;
 
     private Integer heartRate;           // bpm
-    private Integer oxygenSaturation;    // SpO2 (%)
-    private Integer systolicPressure;    // mmHg
-    private Integer diastolicPressure;   // mmHg
+    private Double oxygenSaturation;    // SpO2 (%)
+    private Double systolicPressure;    // mmHg
+    private Double diastolicPressure;   // mmHg
     private Double temperature;          // °C
-    private Integer respiratoryRate;     // rpm
+    private Double respiratoryRate;     // rpm
     private String status;               // NORMAL / ALERT
 
     private LocalDateTime timestamp;

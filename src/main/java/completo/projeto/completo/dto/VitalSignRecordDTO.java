@@ -7,11 +7,11 @@ public record VitalSignRecordDTO(
         String patientName,
         String patientCpf,
         Integer heartRate,
-        Integer oxygenSaturation,
-        Integer systolicPressure,
-        Integer diastolicPressure,
+        Double oxygenSaturation,
+        Double systolicPressure,
+        Double diastolicPressure,
         Double temperature,
-        Integer respiratoryRate,
+        Double respiratoryRate,
         String status,
         String timestamp
 ) {}

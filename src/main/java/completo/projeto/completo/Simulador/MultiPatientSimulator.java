@@ -106,15 +106,15 @@ public class MultiPatientSimulator {
                                 safeTrim(fields, 4), safeTrim(fields, 5), safeTrim(fields, 6),
                                 safeTrim(fields, 7), safeTrim(fields, 8), safeTrim(fields, 9));
                     }
+                    String ts = normalizeTimestamp(safeTrim(fields, 0));
+                    Integer hr = parseIntSafe(safeTrim(fields, 4));  // heartRate, mantido como Integer
+                    Double spo2 = parseDoubleSafe(safeTrim(fields, 5));  // oxygenSaturation, alterado para Double
+                    Double pSys = parseDoubleSafe(safeTrim(fields, 6));  // systolicPressure, alterado para Double
+                    Double pDia = parseDoubleSafe(safeTrim(fields, 7));  // diastolicPressure, alterado para Double
+                    Double temp = parseDoubleSafe(safeTrim(fields, 8));  // temperature, alterado para Double
+                    Integer rFr = parseIntSafe(safeTrim(fields, 9));  // respiratoryRate, mantido como Integer
+                    String status = safeTrim(fields, 10);  // status, mantido como String
 
-                    String ts     = normalizeTimestamp(safeTrim(fields, 0));
-                    Integer hr    = parseIntSafe(safeTrim(fields, 4));
-                    Integer spo2  = parseIntSafe(safeTrim(fields, 5));
-                    Integer pSys  = parseIntSafe(safeTrim(fields, 6));
-                    Integer pDia  = parseIntSafe(safeTrim(fields, 7));
-                    Double  temp  = parseDoubleSafe(safeTrim(fields, 8));
-                    Integer rFr   = parseIntSafe(safeTrim(fields, 9));
-                    String  status= safeTrim(fields, 10);
 
                     if (count <= 3) {
                         System.out.printf("[SIM][%s] #%d PARSED hr=%s spo2=%s pSys=%s pDia=%s temp=%s rFr=%s%n",
