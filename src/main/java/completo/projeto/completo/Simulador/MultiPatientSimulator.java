@@ -1,6 +1,8 @@
 package completo.projeto.completo.Simulador;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,6 +24,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MultiPatientSimulator {
+
+    private static final Logger log = LoggerFactory.getLogger(MultiPatientSimulator.class);
 
     private static final String BASE_DIR = ".";
 
@@ -61,16 +65,21 @@ public class MultiPatientSimulator {
         do {
             processFileOnce(csvPath);
             if (LOOP_FOREVER) {
-                try { Thread.sleep(LOOP_PAUSE_MS); } catch (InterruptedException ignored) {}
+                try {
+                    Thread.sleep(LOOP_PAUSE_MS);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    log.warn("[SIM] Thread interrompida durante pausa: {}", ie.getMessage());
+                }
             }
         } while (LOOP_FOREVER);
     }
 
     private static void processFileOnce(String csvPath) {
         File f = new File(csvPath);
-        System.out.println("[SIM] Abrindo arquivo: " + f.getAbsolutePath() + " (exists=" + f.exists() + ")");
+        log.info("[SIM] Abrindo arquivo: {} (exists={})", f.getAbsolutePath(), f.exists());
         if (!f.exists()) {
-            System.err.println("[SIM][ERRO] Arquivo não encontrado: " + f.getAbsolutePath());
+            log.error("[SIM][ERRO] Arquivo não encontrado: {}", f.getAbsolutePath());
             return;
         }
 
@@ -79,7 +88,7 @@ public class MultiPatientSimulator {
 
         try (BufferedReader reader = new BufferedReader(new FileReader(f, StandardCharsets.UTF_8))) {
             String header = reader.readLine();
-            System.out.println("[SIM] Cabeçalho: " + header);
+            log.info("[SIM] Cabeçalho: {}", header);
 
             HttpClient client = HttpClient.newBuilder()
                     .connectTimeout(Duration.ofSeconds(3))
@@ -93,7 +102,7 @@ public class MultiPatientSimulator {
 
                     String patientId   = safeTrim(fields, 1);
                     if (isBlank(patientId)) {
-                        System.err.println("[SIM][" + f.getName() + "] #" + count + " SKIP: patientId vazio");
+                        log.error("[SIM][{}] #{} SKIP: patientId vazio", f.getName(), count);
                         continue;
                     }
 
@@ -101,27 +110,24 @@ public class MultiPatientSimulator {
                     String patientCpf  = safeTrim(fields, 3);
 
                     if (count <= 3) {
-                        System.out.printf("[SIM][%s] #%d RAW hr='%s' spo2='%s' pSys='%s' pDia='%s' temp='%s' rFr='%s'%n",
+                        log.info("[SIM][{}] #{} RAW hr='{}' spo2='{}' pSys='{}' pDia='{}' temp='{}' rFr='{}'",
                                 f.getName(), count,
                                 safeTrim(fields, 4), safeTrim(fields, 5), safeTrim(fields, 6),
                                 safeTrim(fields, 7), safeTrim(fields, 8), safeTrim(fields, 9));
                     }
-                    String ts = normalizeTimestamp(safeTrim(fields, 0));
-                    Integer hr = parseIntSafe(safeTrim(fields, 4));  // heartRate, mantido como Integer
-                    Double spo2 = parseDoubleSafe(safeTrim(fields, 5));  // oxygenSaturation, alterado para Double
-                    Double pSys = parseDoubleSafe(safeTrim(fields, 6));  // systolicPressure, alterado para Double
-                    Double pDia = parseDoubleSafe(safeTrim(fields, 7));  // diastolicPressure, alterado para Double
-                    Double temp = parseDoubleSafe(safeTrim(fields, 8));  // temperature, alterado para Double
-                    Integer rFr = parseIntSafe(safeTrim(fields, 9));  // respiratoryRate, mantido como Integer
-                    String status = safeTrim(fields, 10);  // status, mantido como String
 
+                    String ts = normalizeTimestamp(safeTrim(fields, 0));
+                    Integer hr = parseIntSafe(safeTrim(fields, 4));
+                    Double spo2 = parseDoubleSafe(safeTrim(fields, 5));
+                    Double pSys = parseDoubleSafe(safeTrim(fields, 6));
+                    Double pDia = parseDoubleSafe(safeTrim(fields, 7));
+                    Double temp = parseDoubleSafe(safeTrim(fields, 8));
+                    Integer rFr = parseIntSafe(safeTrim(fields, 9));
+                    String status = safeTrim(fields, 10);
 
                     if (count <= 3) {
-                        System.out.printf("[SIM][%s] #%d PARSED hr=%s spo2=%s pSys=%s pDia=%s temp=%s rFr=%s%n",
-                                f.getName(), count,
-                                String.valueOf(hr), String.valueOf(spo2),
-                                String.valueOf(pSys), String.valueOf(pDia),
-                                String.valueOf(temp), String.valueOf(rFr));
+                        log.info("[SIM][{}] #{} PARSED hr={} spo2={} pSys={} pDia={} temp={} rFr={}",
+                                f.getName(), count, hr, spo2, pSys, pDia, temp, rFr);
                     }
 
                     boolean alreadySeeded = FIRST_SEEN_PATIENTS.contains(patientId);
@@ -132,9 +138,8 @@ public class MultiPatientSimulator {
 
                     if (mustSendNameCpf) {
                         if (isBlank(patientName) || isBlank(patientCpf)) {
-                            System.err.println("[SIM][" + f.getName() + "] #" + count +
-                                    " SKIP: primeiro registro de " + patientId +
-                                    " sem patientName/patientCpf no CSV (evitando 400).");
+                            log.error("[SIM][{}] #{} SKIP: primeiro registro de {} sem patientName/patientCpf no CSV (evitando 400).",
+                                    f.getName(), count, patientId);
                             continue;
                         }
                         dto.put("patientName", patientName);
@@ -151,8 +156,11 @@ public class MultiPatientSimulator {
                     dto.put("timestamp", ts);
 
                     if (count <= 3) {
-                        System.out.println("[SIM][" + f.getName() + "] #" + count + " DEBUG DTO=" +
-                                objectMapper.writeValueAsString(dto));
+                        try {
+                            log.debug("[SIM][{}] #{} DEBUG DTO={}", f.getName(), count, objectMapper.writeValueAsString(dto));
+                        } catch (Exception e) {
+                            log.debug("[SIM][{}] #{} Falha ao serializar DTO para debug: {}", f.getName(), count, e.getMessage());
+                        }
                     }
 
                     String json = objectMapper.writeValueAsString(dto);
@@ -168,34 +176,36 @@ public class MultiPatientSimulator {
                         builder.header("Authorization", "Bearer " + BEARER_TOKEN);
                     }
 
-                    // pacing por arquivo — garante ~200ms entre envios deste CSV
                     long now = System.currentTimeMillis();
                     long due = lastSendMs + INTERVAL_MS;
                     long sleep = due - now;
                     if (sleep > 0) {
-                        try { Thread.sleep(sleep); } catch (InterruptedException ignored) {}
+                        try {
+                            Thread.sleep(sleep);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            log.warn("[SIM] Thread interrompida enquanto aguardava intervalo: {}", ie.getMessage());
+                        }
                     }
                     lastSendMs = System.currentTimeMillis();
 
                     HttpResponse<String> resp = client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
 
                     if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
-                        System.out.println("[SIM][" + f.getName() + "] #" + count + " OK " + resp.statusCode());
+                        log.info("[SIM][{}] #{} OK {}", f.getName(), count, resp.statusCode());
                         FIRST_SEEN_PATIENTS.add(patientId);
                     } else {
-                        System.err.println("[SIM][" + f.getName() + "] #" + count + " FAIL " + resp.statusCode()
-                                + " body=" + resp.body() + " (patientId=" + patientId + ")");
+                        log.error("[SIM][{}] #{} FAIL {} body={} (patientId={})",
+                                f.getName(), count, resp.statusCode(), resp.body(), patientId);
                     }
 
                 } catch (Exception e) {
-                    System.err.println("[SIM][" + f.getName() + "] Linha #" + count + " ERRO: " + e.getMessage());
-                    e.printStackTrace();
+                    log.error("[SIM][{}] Linha #{} ERRO: {}", f.getName(), count, e.getMessage(), e);
                 }
             }
-            System.out.println("[SIM] Fim do arquivo " + f.getName() + " (linhas processadas=" + count + ")");
+            log.info("[SIM] Fim do arquivo {} (linhas processadas={})", f.getName(), count);
         } catch (Exception e) {
-            System.err.println("[SIM][ERRO] Falha lendo " + f.getAbsolutePath() + ": " + e.getMessage());
-            e.printStackTrace();
+            log.error("[SIM][ERRO] Falha lendo {}: {}", f.getAbsolutePath(), e.getMessage(), e);
         }
     }
 
@@ -208,14 +218,13 @@ public class MultiPatientSimulator {
         String s = arr[idx];
         if (s == null) return null;
         s = s.trim();
-        // remove aspas externas, se existirem
+
         if (s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"")) {
             s = s.substring(1, s.length() - 1).trim();
         }
         return s;
     }
 
-    // normaliza string numérica: aceita 85, 85.0, 85,0; remove símbolos estranhos
     private static String normalizeNum(String s) {
         if (s == null) return null;
         String n = s.trim();
@@ -261,7 +270,6 @@ public class MultiPatientSimulator {
             return LocalDateTime.of(LocalDate.now(), t).toString();
         }
 
-        // BR
         try {
             var br = new DateTimeFormatterBuilder()
                     .appendPattern("dd/MM/uuuu HH:mm:ss")
@@ -270,7 +278,6 @@ public class MultiPatientSimulator {
             return LocalDateTime.parse(s, br).toString();
         } catch (Exception ignore) {}
 
-        // ISO com 'T'
         try {
             var isoT = new DateTimeFormatterBuilder()
                     .appendPattern("uuuu-MM-dd'T'HH:mm:ss")
@@ -287,7 +294,7 @@ public class MultiPatientSimulator {
             return LocalDateTime.parse(s, isoSpace).toString();
         } catch (Exception ignore) {}
 
-        System.err.println("[SIM] timestamp inválido no CSV: '" + s + "', usando agora()");
+        log.warn("[SIM] timestamp inválido no CSV: '{}', usando agora()", s);
         return LocalDateTime.now().toString();
     }
 }

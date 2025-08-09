@@ -1,6 +1,5 @@
 package completo.projeto.completo.dto;
 
-import java.time.LocalDateTime;
 
 public record VitalSignRecordDTO(
         String patientId,

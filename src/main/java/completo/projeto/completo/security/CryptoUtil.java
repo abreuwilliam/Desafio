@@ -41,7 +41,6 @@ public class CryptoUtil {
             cipher.init(Cipher.ENCRYPT_MODE, keySpec, new GCMParameterSpec(GCM_TAG_BITS, iv));
             byte[] ct = cipher.doFinal(plain.getBytes(StandardCharsets.UTF_8));
 
-            // concatena IV || CIPHERTEXT e codifica em Base64
             byte[] out = new byte[iv.length + ct.length];
             System.arraycopy(iv, 0, out, 0, iv.length);
             System.arraycopy(ct, 0, out, iv.length, ct.length);
